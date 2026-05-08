@@ -70,7 +70,10 @@ def _settings_with_types(settings: pd.DataFrame, classifier) -> pd.DataFrame:
 
 
 def get_google_ads_report_impl(
-    date_range: str, breakdown: str, include_campaign_settings: bool = False
+    date_range: str,
+    breakdown: str,
+    include_campaign_settings: bool = False,
+    include_daily_by_campaign: bool = False,
 ) -> dict[str, Any]:
     if date_range not in VALID_RANGES:
         return error_response("google", f"Invalid date_range. Use one of {VALID_RANGES}")
@@ -107,6 +110,7 @@ def get_google_ads_report_impl(
             data_source=source,
             change_history=changes,
             include_campaign_settings=include_campaign_settings,
+            include_daily_by_campaign=include_daily_by_campaign,
         )
     except Exception as e:
         log.exception("Google tool failed")
@@ -234,6 +238,15 @@ def build_mcp_server():
                                 "payload small."
                             ),
                         },
+                        "include_daily_by_campaign": {
+                            "type": "boolean",
+                            "default": False,
+                            "description": (
+                                "If true, attach daily_series_by_campaign to "
+                                "the response: same shape as daily_series but "
+                                "keyed by campaign_name (top 20 by 56-day spend)."
+                            ),
+                        },
                     },
                     "required": ["date_range", "breakdown"],
                 },
@@ -284,6 +297,7 @@ def build_mcp_server():
                 arguments["date_range"],
                 arguments["breakdown"],
                 include_campaign_settings=bool(arguments.get("include_campaign_settings", False)),
+                include_daily_by_campaign=bool(arguments.get("include_daily_by_campaign", False)),
             )
         elif name == "get_meta_ads_report":
             result = get_meta_ads_report_impl(

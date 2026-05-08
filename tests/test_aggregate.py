@@ -64,6 +64,65 @@ def test_by_campaign_type_sums(synthetic_56d):
     assert by_type["Non-Brand"]["spend"] > 0
 
 
+def test_daily_series_by_campaign_top_n_and_shape(synthetic_56d):
+    from ads_mcp_server.aggregate import daily_series_by_campaign
+
+    df = annotate_campaign_types(synthetic_56d, classify_google_campaign)
+    series = daily_series_by_campaign(df, top_n=20)
+    # Synthetic has 2 campaigns — both fit under top_n
+    assert len(series) == 56
+    first = series[0]
+    assert "date" in first
+    assert "Brand_Search" in first and "NonBrand_Generic" in first
+    metric_keys = {"spend", "impressions", "clicks", "ctr_pct", "cpc_usd", "conversions", "cpa_usd"}
+    assert set(first["Brand_Search"].keys()) == metric_keys
+
+
+def test_daily_series_by_campaign_top_n_caps(synthetic_56d):
+    from ads_mcp_server.aggregate import daily_series_by_campaign
+
+    df = annotate_campaign_types(synthetic_56d, classify_google_campaign)
+    series = daily_series_by_campaign(df, top_n=1)
+    # Only 1 campaign retained: NonBrand_Generic has higher spend than Brand_Search
+    first = series[0]
+    assert "NonBrand_Generic" in first
+    assert "Brand_Search" not in first
+
+
+def test_build_response_includes_daily_by_campaign_flag(
+    synthetic_56d, synthetic_settings, today, thresholds
+):
+    df = annotate_campaign_types(synthetic_56d, classify_google_campaign)
+    settings = synthetic_settings.copy()
+    base = build_response(
+        df_56d=df,
+        settings=settings,
+        date_range="last_7_days",
+        breakdown="ad",
+        today=today,
+        thresholds=thresholds,
+        platform="google",
+        fetched_at="2026-05-07T00:00:00Z",
+        data_source="api",
+    )
+    assert "daily_series_by_campaign" not in base
+
+    with_flag = build_response(
+        df_56d=df,
+        settings=settings,
+        date_range="last_7_days",
+        breakdown="ad",
+        today=today,
+        thresholds=thresholds,
+        platform="google",
+        fetched_at="2026-05-07T00:00:00Z",
+        data_source="api",
+        include_daily_by_campaign=True,
+    )
+    assert "daily_series_by_campaign" in with_flag
+    assert len(with_flag["daily_series_by_campaign"]) == 56
+
+
 def test_daily_series_56_entries(synthetic_56d):
     df = annotate_campaign_types(synthetic_56d, classify_google_campaign)
     series = daily_series(df)

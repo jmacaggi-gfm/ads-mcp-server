@@ -225,6 +225,33 @@ def by_ad(
     return rows
 
 
+def daily_series_by_campaign(df_56d: pd.DataFrame, top_n: int = 20) -> list[dict[str, Any]]:
+    """One entry per date; nested {campaign_name: metric_block}.
+
+    Limited to the top `top_n` campaigns by total spend over the full window
+    so payload stays manageable. Other campaigns are dropped (not aggregated
+    into an "Other" bucket — that bucket already exists at the campaign_type
+    level via `daily_series`).
+    """
+    if df_56d.empty or "campaign_name" not in df_56d.columns:
+        return []
+    df = df_56d.copy()
+    df["date"] = pd.to_datetime(df["date"]).dt.date
+    totals = (
+        df.groupby("campaign_name")["spend"].sum().sort_values(ascending=False)
+    )
+    keep = list(totals.head(top_n).index)
+    df = df[df["campaign_name"].isin(keep)]
+    out: list[dict[str, Any]] = []
+    for d, day_df in df.groupby("date"):
+        entry: dict[str, Any] = {"date": d.isoformat()}
+        for name in keep:
+            entry[name] = _metric_block(day_df[day_df["campaign_name"] == name])
+        out.append(entry)
+    out.sort(key=lambda e: e["date"])
+    return out
+
+
 def daily_series(df_56d: pd.DataFrame) -> list[dict[str, Any]]:
     """One entry per date; nested {campaign_type: metric_block}."""
     if df_56d.empty:
@@ -384,6 +411,8 @@ def build_response(
     change_history: dict[str, list[dict[str, Any]]] | None = None,
     df_ad_grain: pd.DataFrame | None = None,
     include_campaign_settings: bool = False,
+    include_daily_by_campaign: bool = False,
+    daily_by_campaign_top_n: int = 20,
 ) -> dict[str, Any]:
     """Assemble full response shape.
 
@@ -439,5 +468,9 @@ def build_response(
     if include_campaign_settings:
         response["campaign_settings"] = campaign_settings_block(
             settings, df_56d, today, thresholds, change_history
+        )
+    if include_daily_by_campaign:
+        response["daily_series_by_campaign"] = daily_series_by_campaign(
+            df_56d, top_n=daily_by_campaign_top_n
         )
     return response
