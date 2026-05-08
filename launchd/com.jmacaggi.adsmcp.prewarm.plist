@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jmacaggi.adsmcp.prewarm</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/jmacaggi/.local/bin/uv</string>
+        <string>run</string>
+        <string>--directory</string>
+        <string>/Users/jmacaggi/marketing-ds/ads-mcp-server</string>
+        <string>python</string>
+        <string>scripts/prewarm.py</string>
+        <string>--skip-meta</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>ADS_MCP_ENV_FILE</key>
+        <string>/Users/jmacaggi/marketing-ds/decision_science/.env</string>
+        <key>PATH</key>
+        <string>/Users/jmacaggi/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Weekday</key>
+            <integer>1</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>2</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>3</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>4</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>5</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/jmacaggi/marketing-ds/ads-mcp-server</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/jmacaggi/marketing-ds/ads-mcp-server/logs/prewarm.stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/jmacaggi/marketing-ds/ads-mcp-server/logs/prewarm.stderr.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
