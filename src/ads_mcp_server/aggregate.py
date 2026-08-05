@@ -225,13 +225,28 @@ def by_ad(
     return rows
 
 
+def _is_block(df: pd.DataFrame) -> dict[str, float | None]:
+    """Average impression-share metrics for a campaign slice."""
+    sis_col = "search_impression_share"
+    bl_col = "search_budget_lost_impression_share"
+    rl_col = "search_rank_lost_impression_share"
+    def _avg(col: str) -> float | None:
+        if col not in df.columns:
+            return None
+        vals = df[col].dropna()
+        return round(float(vals.mean()), 4) if not vals.empty else None
+    return {
+        "search_impression_share": _avg(sis_col),
+        "search_budget_lost_is": _avg(bl_col),
+        "search_rank_lost_is": _avg(rl_col),
+    }
+
+
 def daily_series_by_campaign(df_56d: pd.DataFrame, top_n: int = 20) -> list[dict[str, Any]]:
-    """One entry per date; nested {campaign_name: metric_block}.
+    """One entry per date; nested {campaign_name: metric_block + IS metrics}.
 
     Limited to the top `top_n` campaigns by total spend over the full window
-    so payload stays manageable. Other campaigns are dropped (not aggregated
-    into an "Other" bucket — that bucket already exists at the campaign_type
-    level via `daily_series`).
+    so payload stays manageable.
     """
     if df_56d.empty or "campaign_name" not in df_56d.columns:
         return []
@@ -246,7 +261,8 @@ def daily_series_by_campaign(df_56d: pd.DataFrame, top_n: int = 20) -> list[dict
     for d, day_df in df.groupby("date"):
         entry: dict[str, Any] = {"date": d.isoformat()}
         for name in keep:
-            entry[name] = _metric_block(day_df[day_df["campaign_name"] == name])
+            camp_df = day_df[day_df["campaign_name"] == name]
+            entry[name] = {**_metric_block(camp_df), **_is_block(camp_df)}
         out.append(entry)
     out.sort(key=lambda e: e["date"])
     return out

@@ -73,7 +73,7 @@ def get_google_ads_report_impl(
     date_range: str,
     breakdown: str,
     include_campaign_settings: bool = False,
-    include_daily_by_campaign: bool = False,
+    include_daily_by_campaign: bool = True,
 ) -> dict[str, Any]:
     if date_range not in VALID_RANGES:
         return error_response("google", f"Invalid date_range. Use one of {VALID_RANGES}")
@@ -297,7 +297,7 @@ def build_mcp_server():
                 arguments["date_range"],
                 arguments["breakdown"],
                 include_campaign_settings=bool(arguments.get("include_campaign_settings", False)),
-                include_daily_by_campaign=bool(arguments.get("include_daily_by_campaign", False)),
+                include_daily_by_campaign=True,
             )
         elif name == "get_meta_ads_report":
             result = get_meta_ads_report_impl(
